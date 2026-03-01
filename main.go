@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -14,13 +15,10 @@ type Book struct {
     ID     int    `json:"id"`
     Title  string `json:"title"`
     Author string `json:"author"`
+	Year  int    `json:"year"`
 }
 
-var books = []Book{
-	{ID: 1, Title: "Clean Code", Author: "Robert C. Martin"},
-	{ID: 2, Title: "The Pragmatic Programmer", Author: "Andrew Hunt"},
-	{ID: 3, Title: "Go in Action", Author: "William Kennedy"},
-}
+var books = []Book{}
 
 func main() {
 	e := echo.New()
@@ -29,9 +27,9 @@ func main() {
 
 	e.GET("/ping", ping)
 	e.POST("/echo", echoFunction)
-	// e.POST("/books", notImplemented)
-	// e.GET("/books", getBooks)
-	// e.GET("/books/:id", getBookByID)
+	e.POST("/books", createBooks)
+	e.GET("/books", getBooks)
+	e.GET("/books/:id", getBookByID)
 	// e.PUT("/books/:id", notImplemented)
 	// e.DELETE("/books/:id", notImplemented)
 	// e.POST("/auth/token", notImplemented)
@@ -62,9 +60,37 @@ func echoFunction(c echo.Context) error {
 }	
 
 
-// func getBooks(c echo.Context) error {
+func getBooks(c echo.Context) error {
+	return c.JSON(http.StatusOK, books)
+}	
 
-// 	return c.JSON(http.StatusOK, map[string]bool{
-// 		"success": true,
-// 	})
-// }	
+func createBooks(c echo.Context) error {
+	var payload Book
+	if err := c.Bind(&payload); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid payload bos"})
+	}
+	payload.ID = len(books) + 1
+	books = append(books, payload)
+	return c.JSON(http.StatusCreated, payload)
+}	
+
+func getBookByID(c echo.Context) error {
+	idParam := c.Param("id")
+
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "id must be numeric",
+		})
+	}
+
+	for _, book := range books {
+		if book.ID == id {
+			return c.JSON(http.StatusOK, book)
+		}
+	}
+
+	return c.JSON(http.StatusNotFound, map[string]string{
+		"error": "book not found",
+	})
+}	
