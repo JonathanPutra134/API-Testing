@@ -18,7 +18,10 @@ type Book struct {
 	Year  int    `json:"year"`
 }
 
-var books = []Book{}
+var books = []Book{
+}
+var nextID = 1
+var token string
 
 func main() {
 	e := echo.New()
@@ -32,7 +35,7 @@ func main() {
 	e.GET("/books/:id", getBookByID)
 	e.PUT("/books/:id", updateBook)
 	e.DELETE("/books/:id", deleteBook)
-	// e.POST("/auth/token", notImplemented)
+	e.POST("/auth/token", generateAuthToken)
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -61,6 +64,11 @@ func echoFunction(c echo.Context) error {
 
 
 func getBooks(c echo.Context) error {
+	// if(token !== "") {
+	// 	return c.JSON(http.StatusUnauthorized, map[string]string{
+	// 		"error": "missing auth token",
+	// 	})
+	// }
 	return c.JSON(http.StatusOK, books)
 }	
 
@@ -69,7 +77,9 @@ func createBooks(c echo.Context) error {
 	if err := c.Bind(&payload); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid payload bos"})
 	}
-	payload.ID = len(books) + 1
+	payload.ID = nextID
+	nextID++
+	
 	books = append(books, payload)
 	return c.JSON(http.StatusCreated, payload)
 }	
@@ -149,6 +159,13 @@ func deleteBook(c echo.Context) error {
 
 	return c.JSON(http.StatusNotFound, map[string]string{
 		"error": "book not found",
+	})
+}	
+
+
+func generateAuthToken(c echo.Context) error {
+	return c.JSON(http.StatusOK, map[string]string{
+		"token": "generated-token",
 	})
 }	
 
