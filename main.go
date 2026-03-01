@@ -101,13 +101,8 @@ func getBooks(c echo.Context) error {
 	limit := c.QueryParam("limit")
 
 	if page != "" && limit != "" {
-		pageNum, err1 := strconv.Atoi(page)
-		limitNum, err2 := strconv.Atoi(limit)
-		if err1 != nil || err2 != nil || pageNum < 1 || limitNum < 1 {
-			return c.JSON(http.StatusBadRequest, map[string]string{
-				"error": "page and limit must be positive integers",
-			})
-		}
+		pageNum, _ := strconv.Atoi(page)
+		limitNum, _ := strconv.Atoi(limit)
 		fmt.Println("Page:", pageNum, "Limit:", limitNum)
 		
 		start := (pageNum - 1) * limitNum
@@ -156,12 +151,7 @@ func createBooks(c echo.Context) error {
 func getBookByID(c echo.Context) error {
 	idParam := c.Param("id")
 
-	id, err := strconv.Atoi(idParam)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{
-			"error": "id must be numeric",
-		})
-	}
+	id, _ := strconv.Atoi(idParam)
 
 	for _, book := range books {
 		if book.ID == id {
@@ -178,12 +168,7 @@ func getBookByID(c echo.Context) error {
 func updateBook(c echo.Context) error {
 	idParam := c.Param("id")
 
-	id, err := strconv.Atoi(idParam)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{
-			"error": "id must be numeric",
-		})
-	}
+	id, _ := strconv.Atoi(idParam)
 
 	var payload Book
 
