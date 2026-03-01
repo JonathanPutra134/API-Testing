@@ -30,8 +30,8 @@ func main() {
 	e.POST("/books", createBooks)
 	e.GET("/books", getBooks)
 	e.GET("/books/:id", getBookByID)
-	// e.PUT("/books/:id", notImplemented)
-	// e.DELETE("/books/:id", notImplemented)
+	e.PUT("/books/:id", updateBook)
+	e.DELETE("/books/:id", deleteBook)
 	// e.POST("/auth/token", notImplemented)
 
 	port := os.Getenv("PORT")
@@ -94,3 +94,61 @@ func getBookByID(c echo.Context) error {
 		"error": "book not found",
 	})
 }	
+
+
+func updateBook(c echo.Context) error {
+	idParam := c.Param("id")
+
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "id must be numeric",
+		})
+	}
+
+	var payload Book
+
+	if err := c.Bind(&payload); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "invalid json body",
+		})
+	}
+
+	for i := range books {
+		if books[i].ID == id {
+			books[i].Title = payload.Title
+			books[i].Author = payload.Author
+			books[i].Year = payload.Year
+			return c.JSON(http.StatusOK, books[i])
+		}
+	}
+
+	return c.JSON(http.StatusNotFound, map[string]string{
+		"error": "book not found",
+	})
+}	
+
+func deleteBook(c echo.Context) error {
+	idParam := c.Param("id")
+
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "id must be numeric",
+		})
+	}
+
+	for i, book := range books {
+		if book.ID == id {
+			books = append(books[:i], books[i+1:]...)
+			return c.JSON(http.StatusOK, map[string]string{
+				"message": "book deleted",
+			})
+		}
+	}
+
+	return c.JSON(http.StatusNotFound, map[string]string{
+		"error": "book not found",
+	})
+}	
+
