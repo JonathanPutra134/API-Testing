@@ -18,10 +18,15 @@ type Book struct {
 	Year  int    `json:"year"`
 }
 
+type LoginRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 var books = []Book{
 }
 var nextID = 1
-var token string
+const authToken = "generated-token"
 
 func main() {
 	e := echo.New()
@@ -64,11 +69,13 @@ func echoFunction(c echo.Context) error {
 
 
 func getBooks(c echo.Context) error {
-	// if(token !== "") {
-	// 	return c.JSON(http.StatusUnauthorized, map[string]string{
-	// 		"error": "missing auth token",
-	// 	})
-	// }
+	auth := c.Request().Header.Get("Authorization")
+
+	if auth != "Bearer "+authToken {
+		return c.JSON(http.StatusUnauthorized, map[string]string{
+			"error": "invalid or missing token",
+		})
+	}
 	return c.JSON(http.StatusOK, books)
 }	
 
@@ -79,7 +86,7 @@ func createBooks(c echo.Context) error {
 	}
 	payload.ID = nextID
 	nextID++
-	
+
 	books = append(books, payload)
 	return c.JSON(http.StatusCreated, payload)
 }	
@@ -164,8 +171,18 @@ func deleteBook(c echo.Context) error {
 
 
 func generateAuthToken(c echo.Context) error {
+	var loginReq LoginRequest
+	if err := c.Bind(&loginReq); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "invalid json body",
+		})
+	}
+
+   if loginReq.Username != "admin" || loginReq.Password != "password" {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid credentials"})
+	}
 	return c.JSON(http.StatusOK, map[string]string{
-		"token": "generated-token",
+		"token": authToken,
 	})
 }	
 
