@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -25,9 +26,9 @@ type LoginRequest struct {
 }
 
 var books = []Book{
-	{ID: 1, Title: "The Great Gatsby", Author: "F. Scott Fitzgerald", Year: 1925},
-	{ID: 2, Title: "To Kill a Mockingbird", Author: "Harper Lee", Year: 1960},
-	{ID: 3, Title: "1984", Author: "George Orwell", Year: 1949},
+	// {ID: 1, Title: "The Great Gatsby", Author: "F. Scott Fitzgerald", Year: 1925},
+	// {ID: 2, Title: "To Kill a Mockingbird", Author: "Harper Lee", Year: 1960},
+	// {ID: 3, Title: "1984", Author: "George Orwell", Year: 1949},
 }
 var nextID = 1
 const authToken = "generated-token"
@@ -129,6 +130,22 @@ func createBooks(c echo.Context) error {
 	if err := c.Bind(&payload); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid payload bos"})
 	}
+
+	payload.Title = strings.TrimSpace(payload.Title)
+	payload.Author = strings.TrimSpace(payload.Author)
+
+	if payload.Title == "" || payload.Author == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "title and author are required",
+		})
+	}
+
+	if payload.Year == 0 {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "year must be > 0",
+		})
+	}
+
 	payload.ID = nextID
 	nextID++
 
