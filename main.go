@@ -14,7 +14,7 @@ func main() {
 	e.Use(middleware.Recover())
 
 	e.GET("/ping", ping)
-	// e.POST("/echo", notImplemented)
+	e.POST("/echo", echoFunction)
 	// e.POST("/books", notImplemented)
 	// e.GET("/books", notImplemented)
 	// e.GET("/books/:id", notImplemented)
@@ -34,4 +34,15 @@ func ping(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]bool{
 		"success": true,
 	})
+}	
+
+func echoFunction(c echo.Context) error {
+	var body map[string]interface{}
+
+	if err := c.Bind(&body); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Invalid JSON",
+		})
+	}
+	return c.JSON(http.StatusOK, body)
 }	
