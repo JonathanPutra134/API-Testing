@@ -1,0 +1,13 @@
+# Binaries
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+
+# Build output
+bin/
+dist/
+
+# Go workspace and env
+.env
