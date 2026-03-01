@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -24,6 +25,9 @@ type LoginRequest struct {
 }
 
 var books = []Book{
+	{ID: 1, Title: "The Great Gatsby", Author: "F. Scott Fitzgerald", Year: 1925},
+	{ID: 2, Title: "To Kill a Mockingbird", Author: "Harper Lee", Year: 1960},
+	{ID: 3, Title: "1984", Author: "George Orwell", Year: 1949},
 }
 var nextID = 1
 const authToken = "generated-token"
@@ -75,6 +79,47 @@ func getBooks(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, map[string]string{
 			"error": "invalid or missing token",
 		})
+	}
+
+	author := c.QueryParam("author")
+	fmt.Println("Author filter:", author)
+	if author != "" {
+		filteredBooks := []Book{}
+		for _, book := range books {
+			fmt.Println(book.Author)
+			fmt.Println(author)
+			if book.Author == author {
+				fmt.Println("Matched book:", book.Title)
+				filteredBooks = append(filteredBooks, book)
+			}
+		}
+		return c.JSON(http.StatusOK, filteredBooks)
+	}
+
+	page := c.QueryParam("page")
+	limit := c.QueryParam("limit")
+
+	if page != "" && limit != "" {
+		pageNum, err1 := strconv.Atoi(page)
+		limitNum, err2 := strconv.Atoi(limit)
+		if err1 != nil || err2 != nil || pageNum < 1 || limitNum < 1 {
+			return c.JSON(http.StatusBadRequest, map[string]string{
+				"error": "page and limit must be positive integers",
+			})
+		}
+		fmt.Println("Page:", pageNum, "Limit:", limitNum)
+		
+		start := (pageNum - 1) * limitNum
+		end := start + limitNum
+
+		fmt.Println("Start:", start, "End:", end)
+		if start >= len(books) {
+			return c.JSON(http.StatusOK, []Book{})
+		}
+		if end > len(books) {
+			end = len(books)
+		}
+		return c.JSON(http.StatusOK, books[start:end])
 	}
 	return c.JSON(http.StatusOK, books)
 }	
